@@ -1,9 +1,11 @@
 import pynbody
 import numpy as np
 
+
 def setup():
     global f
     f = pynbody.load("testdata/ramses_partial_output_00250")
+
 
 def test_lengths():
     assert len(f.gas) == 152667
@@ -18,9 +20,9 @@ def test_properties():
 def test_particle_arrays():
     f['pos']
     f['vel']
-    np.testing.assert_allclose(f.star['pos'][50], [29.93861623, 29.29166795, 29.77920022])
-    np.testing.assert_allclose(f.dm['pos'][50], [23.76016295,  21.64945726, 7.70719058])
-    np.testing.assert_equal(f.dm['iord'][-50:-40], [126079, 679980, 602104, 352311, 306943, 147989, 121521, 915870,
+    np.testing.assert_allclose(f.star['pos'][50], [ 29.93861623,  29.29166795,  29.77920022])
+    np.testing.assert_allclose(f.dm['pos'][50], [ 23.76016295,  21.64945726,   7.70719058])
+    np.testing.assert_equal(f.dm['iord'][-50:-40],[126079, 679980, 602104, 352311, 306943, 147989, 121521, 915870,
        522489, 697169])
     np.testing.assert_equal(f.star['iord'][-50:-40],[124122,  65978, 160951,  83281, 120237, 117882, 124849, 111615,
        144166,  26147])
@@ -76,9 +78,8 @@ def test_rt_arrays():
 
     f1.gas['rad_0_flux'] # ensure 3d name triggers loading
 
-    np.testing.assert_allclose(
-        f1.gas['rad_0_rho'][::5000],
-        [8.63987256e-02,   3.73498855e-04,   3.46061505e-04,
+    np.testing.assert_allclose(f1.gas['rad_0_rho'][::5000],
+      [  8.63987256e-02,   3.73498855e-04,   3.46061505e-04,
          2.13979002e-04,   3.22825503e-04,   3.29494226e-04,
          2.26216739e-04,   3.30639509e-06,   3.61922553e-05,
          8.25142141e-06,   1.25595394e-05,   7.11374568e-07,
@@ -109,12 +110,6 @@ def test_forcegas_dmo():
     assert len(f_dmo.families())==2
     assert len(f_dmo.dm)==274004
     assert len(f_dmo.g)==907818
-
-    assert len(f_dmo.dm["cpu"]) == 274004
-    assert len(f_dmo.g["cpu"]) == 907818
-
-    assert np.all(f_dmo.dm["cpu"] == 1)
-    assert np.all(f_dmo.g["cpu"] == 1)
 
     np.testing.assert_allclose(f_dmo.g['mass'][::5000], np.ones((182,), dtype=np.float64), rtol = 1e-5)
     np.testing.assert_allclose(f_dmo.g['rho'][::10000],[  2.09715200e+06,   2.09715200e+06,   2.09715200e+06,
@@ -163,3 +158,23 @@ def test_tform_and_tform_raw():
     np.testing.assert_allclose(f.st['tform_raw'][:10], [4.58574701, 4.58100771, 4.58284129, 3.18777836, 4.55801122,
                                                         4.50733498, 4.5100136,  4.57288808, 4.55926183, 4.52128465],
                                rtol=1e-5)
+
+def test_proper_time_loading():
+    f_pt = pynbody.load(
+        "testdata/prop_time_output_00030", cpus=range(10, 20))
+
+    f_pt._is_using_proper_time = True
+
+    f_pt._load_particle_block('tform')
+    f_pt._convert_tform()
+    np.testing.assert_allclose(
+        f_pt.s["tform"].in_units("Gyr"),
+        [2.52501534, 2.57053015, 2.66348155, 2.99452429, 2.49332345,
+        3.62452373, 2.22125997, 2.53889974, 2.30228611, 3.45341852,
+        2.48534871, 3.42507129, 2.39147047, 2.74341721, 3.07370808,
+        2.69028377, 2.96989821, 3.0768944, 2.48748702, 3.79943883,
+        3.94957879, 2.24967707, 4.01734689, 3.65785368, 2.63618622,
+        2.69290132, 2.59963679, 4.03835932, 2.77991464, 2.71311552,
+        2.38078038, 4.3666123, 2.68693346, 3.37377901, 3.27283305,
+        3.03470615, 2.4334257, 2.65158796, 2.90785361, 2.56396249],
+        rtol=1e-5)
